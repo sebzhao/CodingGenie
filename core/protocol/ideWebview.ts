@@ -76,4 +76,8 @@ export type ToWebviewFromIdeProtocol = ToWebviewFromIdeOrCoreProtocol & {
   openOnboardingCard: [undefined, void];
   applyCodeFromChat: [undefined, void];
   updateApplyState: [ApplyState, void];
+  invalidateSuggestions: [number, void];
+  requestProactiveSuggestions: [undefined, void];
+  setTaskDescription: [string, void];
+  setProactiveConfig: [string[], void];
 };

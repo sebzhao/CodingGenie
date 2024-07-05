@@ -46,6 +46,8 @@ type State = {
   mainEditorContent?: JSONContent;
   selectedProfileId: string;
   configError: ConfigValidationError[] | undefined;
+  proactiveConfig?: any;
+  taskDescription?: string;
 };
 
 const initialState: State = {
@@ -81,6 +83,14 @@ const initialState: State = {
   sessionId: v4(),
   defaultModelTitle: "GPT-4",
   selectedProfileId: "local",
+  proactiveConfig: {
+    "Code Explanation": true,
+    "Code Improvement": true,
+    "Brainstorming Idea": true,
+    "Testing": true,
+    "Bug Fix": true,
+    "Syntax Hint": true,
+  }
 };
 
 export const stateSlice = createSlice({
@@ -240,6 +250,8 @@ export const stateSlice = createSlice({
         contextItems?: ContextItemWithId[];
       }>,
     ) => {
+      console.log(payload.index);
+      console.log(state.history.length);
       if (payload.index >= state.history.length) {
         state.history.push({
           message: { ...payload.message, id: uuidv4() },
@@ -442,6 +454,32 @@ export const stateSlice = createSlice({
         selectedProfileId: payload,
       };
     },
+    setProactiveConfig: (
+      state, 
+      {payload}: PayloadAction<{selected: string[]}>,
+    ) => {
+      const newConfig = {}
+
+      for (const key of Object.keys(state.proactiveConfig)) {
+        if (payload.selected.includes(key)) {
+          newConfig[key] = true
+        } else {
+          newConfig[key] = false
+        }
+      }
+      
+      return {
+        ...state,
+        proactiveConfig: newConfig
+      }
+    },
+
+    setTaskDescription: (
+      state,
+      { payload }: PayloadAction<{ task_description: string }>,
+    ) => {
+      state.taskDescription = payload.task_description;
+    }
   },
 });
 
@@ -470,6 +508,8 @@ export const {
   setSelectedProfileId,
   deleteMessage,
   setIsGatheringContext,
+  setProactiveConfig,
+  setTaskDescription
 } = stateSlice.actions;
 
 export default stateSlice.reducer;

@@ -66,6 +66,17 @@ export class ContinueGUIWebviewViewProvider
       this.extensionContext,
       webviewView,
     );
+
+    vscode.commands.executeCommand("continue.enableProactiveSuggestions");
+
+    webviewView.onDidChangeVisibility(() => {
+      // Change whether proactive suggestions are enabled based on whether webview is in view.
+      if (webviewView.visible) {
+          vscode.commands.executeCommand("continue.enableProactiveSuggestions");
+      } else {
+          vscode.commands.executeCommand("continue.disableProactiveSuggestions");
+      }
+  });
   }
 
   private _webview?: vscode.Webview;

@@ -32,6 +32,7 @@ import { Battery } from "./util/battery";
 import { getFullyQualifiedPath } from "./util/util";
 import { uriFromFilePath } from "./util/vscode";
 import type { VsCodeWebviewProtocol } from "./webviewProtocol";
+import { chatTimeoutLength, codeTimeoutLength } from "./proactive/constants";
 
 let fullScreenPanel: vscode.WebviewPanel | undefined;
 
@@ -728,6 +729,96 @@ const commandsMap: (
       sidebar.webviewProtocol?.request("navigateTo", { path });
       focusGUI();
     },
+    "continue.initializeProactiveSuggestions": () => {
+      // Set all values to false initially
+      extensionContext.workspaceState.update("chatTimeout", false);
+      extensionContext.workspaceState.update("codeTimeout", false);
+    },
+    "continue.requestProactiveSuggestions": () => {
+      // FIXME: Add in an option s.t. if this is done using the command, then it's uncancellable even on changes.
+      sidebar.webviewProtocol?.request("requestProactiveSuggestions", undefined);
+    },
+    "continue.enableProactiveSuggestions": () => {
+      ide.proactiveSuggestionsEnabled = true;
+    },
+    "continue.disableProactiveSuggestions": () => {
+      ide.proactiveSuggestionsEnabled = false;
+    },
+    "continue.updateChatTimer": () => {
+      const chatTimer = ide.chatTimer;
+      if (chatTimer) {
+        clearTimeout(chatTimer);
+      }
+      extensionContext.workspaceState.update("chatTimeout", true);
+
+      sidebar.webviewProtocol?.request("invalidateSuggestions", Date.now());
+
+      // Set a timeout that will update the value to false
+      const newChatTimer = setTimeout(() => {
+        extensionContext.workspaceState.update("chatTimeout", false);
+      }, chatTimeoutLength)
+
+      ide.chatTimer = newChatTimer;
+    },
+    "continue.updateCodeTimer": () => {
+      const codeTimer = ide.codeTimer;
+      if (codeTimer) {
+        clearTimeout(codeTimer);
+      }
+      extensionContext.workspaceState.update("codeTimeout", true);
+
+      sidebar.webviewProtocol?.request("invalidateSuggestions", Date.now());
+
+      // Set a timeout that will update codeTimeout to false and request a proactive suggestion at the end of the timeout.
+      const newCodeTimer = setTimeout(() => {
+        extensionContext.workspaceState.update("codeTimeout", false);
+        
+        // Restart timer for proactive suggestions if no chat timer
+        if (extensionContext.workspaceState.get("chatTimeout") === undefined || !extensionContext.workspaceState.get("chatTimeout")) {
+          console.log("Restarting proactive suggestions timer");
+          vscode.commands.executeCommand("continue.requestProactiveSuggestions");
+        }
+      }, codeTimeoutLength)
+
+      ide.codeTimer = newCodeTimer;     
+    },
+    "continue.configureTaskDescription": async () => {
+      const userInput = await vscode.window.showInputBox({
+        placeHolder: 'Enter your task description here',
+        prompt: 'Please enter your task description',
+        validateInput: (text: string) => {
+          return text.trim().length === 0 ? 'Input cannot be empty' : null;
+        }
+      });
+
+      if (userInput) {
+        sidebar.webviewProtocol?.request("setTaskDescription", userInput);
+      }
+    },
+    "continue.configureProactiveConfig": async () => {
+      // By default, all are enabled.
+        const options = [
+        {label: "Code Explanation", picked: true},
+        {label: "Code Improvement", picked: true},
+        {label: "Brainstorming Idea", picked: true},
+        {label: "Testing", picked: true},
+        {label: "Bug Fix", picked: true},
+        {label: "Syntax Hint", picked: true},
+      ]
+
+      const selectedOptions = await vscode.window.showQuickPick(
+          options,
+          {
+              placeHolder: 'Select which proactive suggestion types to enable',
+              canPickMany: true
+          }
+      );
+
+      if (selectedOptions) {
+          const selectedLabels = selectedOptions.map(option => option.label);
+          sidebar.webviewProtocol?.request("setProactiveConfig", selectedLabels);
+      }
+    }
   };
 };
 

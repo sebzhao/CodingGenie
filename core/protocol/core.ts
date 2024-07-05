@@ -158,4 +158,6 @@ export type ToCoreFromIdeOrWebviewProtocol = {
   "profiles/switch": [{ id: string }, undefined];
 
   "auth/getAuthUrl": [undefined, { url: string }];
+
+  "updateChatTimer": [undefined, void];
 };

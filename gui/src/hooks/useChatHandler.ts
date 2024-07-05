@@ -15,7 +15,7 @@ import { constructMessages } from "core/llm/constructMessages";
 import { stripImages } from "core/llm/images";
 import { getBasename, getRelativePath } from "core/util";
 import { usePostHog } from "posthog-js/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import resolveEditorContent, {
   hasSlashCommandOrContextProvider,
@@ -31,10 +31,12 @@ import {
   setInactive,
   setIsGatheringContext,
   setMessageAtIndex,
+  setProactiveConfig,
   streamUpdate,
 } from "../redux/slices/stateSlice";
 import { resetNextCodeBlockToApplyIndex } from "../redux/slices/uiStateSlice";
 import { RootState } from "../redux/store";
+import { useWebviewListener } from "./useWebviewListener";
 
 function useChatHandler(dispatch: Dispatch, ideMessenger: IIdeMessenger) {
   const posthog = usePostHog();
@@ -53,12 +55,40 @@ function useChatHandler(dispatch: Dispatch, ideMessenger: IIdeMessenger) {
   );
 
   const history = useSelector((store: RootState) => store.state.history);
+  const historyRef = useRef(history);
+  useEffect(() => {
+    historyRef.current = history;
+  }, [history]);
+
+
   const active = useSelector((store: RootState) => store.state.active);
   const activeRef = useRef(active);
 
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
+
+  const taskDescriptionRef = useRef("");
+
+  useWebviewListener("setTaskDescription", async (data) => {
+    taskDescriptionRef.current = data;
+  });
+
+  async function getChatResponse(messages: ChatMessage[]) {
+    try {
+      const abortController = new AbortController();
+      const cancelToken = abortController.signal;
+      const completion = ideMessenger.llmChat(
+        defaultModel.title,
+        cancelToken,
+        messages,
+      );
+      return completion;
+    } catch (e) {
+      console.log(e);
+      console.log("Request response failed");
+    }
+  }
 
   async function _streamNormalInput(messages: ChatMessage[]) {
     const abortController = new AbortController();
@@ -95,6 +125,8 @@ function useChatHandler(dispatch: Dispatch, ideMessenger: IIdeMessenger) {
       dispatch(clearLastResponse());
     }
   }
+
+  
 
   const getSlashCommandForInput = (
     input: MessageContent,
@@ -178,6 +210,7 @@ function useChatHandler(dispatch: Dispatch, ideMessenger: IIdeMessenger) {
   ) {
     try {
       if (typeof index === "number") {
+        console.log("Calls resubmitAtIndex");
         dispatch(resubmitAtIndex({ index, editorState }));
       } else {
         dispatch(initNewActiveMessage({ editorState }));
@@ -251,7 +284,10 @@ function useChatHandler(dispatch: Dispatch, ideMessenger: IIdeMessenger) {
         editorState,
       };
 
+      console.log("HISTORY IN STREAMRESPONSE", history);
       let newHistory: ChatHistory = [...history.slice(0, index), historyItem];
+      console.log(history);
+      console.log(newHistory);
       const historyIndex = index || newHistory.length - 1;
       dispatch(
         setMessageAtIndex({
@@ -312,7 +348,72 @@ function useChatHandler(dispatch: Dispatch, ideMessenger: IIdeMessenger) {
     }
   }
 
-  return { streamResponse };
+
+  async function getProactiveSuggestions(
+    editorState: JSONContent,
+    modifiers: InputModifiers,
+    ideMessenger: IIdeMessenger,
+    proactiveConfig: any,
+    index?: number,
+  ) {
+    try {
+      let currentFileContents = "";
+      // Automatically use currently open file
+
+      const currentFilePath = await ideMessenger.ide.getCurrentFile();
+      
+      if (typeof currentFilePath === "string") {
+        console.log("Before getting file contents");
+        currentFileContents =
+          await ideMessenger.ide.readFileWithCursor(currentFilePath);
+        console.log(currentFileContents);
+      }
+
+      const enabledSuggestions = Object.keys(proactiveConfig)
+      .filter(key => proactiveConfig[key]) 
+      .join(", "); 
+
+      let messageContent = "";
+      if (taskDescriptionRef.current != "") {
+        messageContent = `Task:\n${taskDescriptionRef.current}\nCode:\n\`\`\`\n${currentFileContents}\n\`\`\`\Provide suggestions based on the code context and task description. Tailor all suggestions to the task description, and do not provided suggestions that are not relevant to the task unless there are no relevant suggestions for the code context. Include \`function name\` in suggestion title if it is mentioned in the suggestion. Use one of the following formats depending on suggestion type, provide 3 suggestions:\n1. {suggestion type: short title}\n{explaining provided code or brainstorming high-level ideas}\nOR\n1. {suggestion type: short title}\n\`\`\`\{language}\n{one or more suggested code snippets}\n\`\`\`\n{clear and detailed explanation for each code snippet in bullet point format. if code is very straightforward then don't explain}\n"suggestion type" can be one of (${enabledSuggestions}) or something else. If there are multiple functions or classes in the code, provide references to the specific function or class that the suggestion pertains to in the explanation.`
+      } else {
+        messageContent = `Code:\n\`\`\`\n${currentFileContents}\n\`\`\`\Provide suggestions based on the code context. Include \`function name\` in suggestion title if it is mentioned in the suggestion. Use one of the following formats depending on suggestion type, provide 3 suggestions:\n1. {suggestion type: short title}\n{explaining provided code or brainstorming high-level ideas}\nOR\n1. {suggestion type: short title}\n\`\`\`\{language}\n{one or more suggested code snippets}\n\`\`\`\n{clear and detailed explanation for each code snippet in bullet point format. if code is very straightforward then don't explain}\n"suggestion type" can be one of (${enabledSuggestions}) or something else. If there are multiple functions or classes in the code, provide references to the specific function or class that the suggestion pertains to in the explanation.`
+      }
+
+      const message: ChatMessage = {
+        role: "user",
+        content: messageContent,
+
+      };
+
+      const historyItem: ChatHistoryItem = {
+        message,
+        contextItems,
+        editorState,
+      };
+
+      let newHistory: ChatHistory = [...historyRef.current.slice(0, index), historyItem];
+
+      // TODO: hacky way to allow rerender
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      
+      const messages = constructMessages(newHistory, defaultModel.title);
+
+      console.log("Messages in getProactiveSuggestions", messages);
+      let response = await getChatResponse(messages);
+      return response;
+    } catch (e: any) {
+      console.debug("Error streaming response: ", e);
+      ideMessenger.post("showToast", [
+        "error",
+        `Error streaming response: ${e.message}`,
+      ]);
+    } finally {
+      dispatch(setInactive());
+    }
+  }
+
+  return { streamResponse,  getProactiveSuggestions};
 }
 
 export default useChatHandler;

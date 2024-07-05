@@ -485,6 +485,7 @@ export interface IDE {
   runCommand(command: string): Promise<void>;
   saveFile(filepath: string): Promise<void>;
   readFile(filepath: string): Promise<string>;
+  readFileWithCursor?(filepath: string): Promise<string>;
   readRangeInFile(filepath: string, range: Range): Promise<string>;
   showLines(
     filepath: string,
@@ -520,6 +521,11 @@ export interface IDE {
 
   // Callbacks
   onDidChangeActiveTextEditor(callback: (filepath: string) => void): void;
+
+  proactiveSuggestionTimer?: NodeJS.Timer;
+  chatTimer?: NodeJS.Timer;
+  codeTimer?: NodeJS.Timer;
+  proactiveSuggestionsEnabled?: boolean;
   pathSep(): Promise<string>;
 }
 

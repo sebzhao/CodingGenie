@@ -236,6 +236,13 @@ export class VsCodeExtension {
       this.configHandler.reloadConfig();
     });
 
+    // Initialize proactive suggestions
+    vscode.commands.executeCommand("continue.initializeProactiveSuggestions");
+
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      vscode.commands.executeCommand("continue.updateCodeTimer");
+    });
+
     vscode.workspace.onDidSaveTextDocument(async (event) => {
       // Listen for file changes in the workspace
       const filepath = event.uri.fsPath;

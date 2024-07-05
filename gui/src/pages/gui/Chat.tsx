@@ -45,7 +45,9 @@ import {
   clearLastResponse,
   deleteMessage,
   newSession,
+  setDefaultModel,
   setInactive,
+  setProactiveConfig,
 } from "../../redux/slices/stateSlice";
 import {
   setDialogEntryOn,
@@ -61,6 +63,12 @@ import {
 } from "../../util";
 import { FREE_TRIAL_LIMIT_REQUESTS } from "../../util/freeTrial";
 import { getLocalStorage, setLocalStorage } from "../../util/localStorage";
+import "./gui.css";
+import {
+  ProactiveSuggestion,
+  SuggestionSet,
+} from "../../components/proactive-suggestion/proactive-suggestion";
+import { v4 as uuidv4 } from "uuid";
 
 const TopGuiDiv = styled.div<{
   showScrollbar?: boolean;
@@ -84,11 +92,15 @@ const StopButton = styled.div`
   padding: 4px 8px;
   color: ${lightGray};
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.08);
   transition: box-shadow 0.3s ease;
 
   &:hover {
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 6px 8px rgba(0, 0, 0, 0.15),
+      0 3px 6px rgba(0, 0, 0, 0.1);
   }
 `;
 
@@ -144,11 +156,20 @@ function fallbackRender({ error, resetErrorBoundary }: any) {
   );
 }
 
+interface ProactiveSuggestion {
+  tag: string;
+  expanded_text: string;
+  code: string;
+}
+
 export function Chat() {
   const posthog = usePostHog();
   const dispatch = useDispatch();
   const ideMessenger = useContext(IdeMessengerContext);
-  const { streamResponse } = useChatHandler(dispatch, ideMessenger);
+  const { streamResponse, getProactiveSuggestions } = useChatHandler(
+    dispatch,
+    ideMessenger,
+  );
   const onboardingCard = useOnboardingCard();
   const { showTutorialCard, closeTutorialCard } = useTutorialCard();
   const sessionState = useSelector((state: RootState) => state.state);
@@ -204,6 +225,117 @@ export function Chat() {
     setIsAtBottom(atBottom);
   };
 
+  // Proactive suggestion logic
+
+  // Tracks whether or not we want to keep the last suggestions -- if any are accepted, then we should add them permanently, otherwise they are up for deletion.
+  const [keepLastSuggestions, setKeepLastSuggestions] =
+    useState<boolean>(false);
+
+  const keepLastSuggestionRef = useRef<boolean>(null);
+
+  const stateHistoryRef = useRef<any>(null);
+
+  const [proactiveSuggestions, setProactiveSuggestions] = useState<
+    SuggestionSet[]
+  >([]);
+
+  const proactiveConfig = useSelector(
+    (state: RootState) => state.state.proactiveConfig,
+  );
+
+  useWebviewListener("setProactiveConfig", async (data) => {
+    dispatch(setProactiveConfig({ selected: data }));
+  });
+
+  useEffect(() => {
+    stateHistoryRef.current = state.history;
+    console.log("state history", stateHistoryRef.current);
+  }, [state]);
+
+  useEffect(() => {
+    console.log("Proactive Suggestions", proactiveSuggestions);
+  }, [proactiveSuggestions]);
+
+  useEffect(() => {
+    console.log("keep last suggestion in state", keepLastSuggestions);
+    keepLastSuggestionRef.current = keepLastSuggestions;
+  }, [keepLastSuggestions]);
+
+  // Let's just submit a cancel request instead and handle it here.
+  const lastChange = useRef(null);
+
+  useWebviewListener("invalidateSuggestions", async (data) => {
+    console.log(data);
+    lastChange.current = data;
+  });
+
+  // FIXME: Move this to a utils file.
+  useWebviewListener(
+    "requestProactiveSuggestions",
+    async () => {
+      const startTime = Date.now();
+      let suggestions = await getProactiveSuggestions(
+        stateHistoryRef.current[stateHistoryRef.current.length - 2] || null,
+        { useCodebase: true, noContext: false },
+        ideMessenger,
+        proactiveConfig,
+      );
+      console.log(suggestions);
+
+      const pattern =
+        /\d+\.\s*([^\n]+)\n*(```[\s\S]*?```)\n*([\s\S]*?)(?=\n\d+\.|$)/gu;
+
+      const matches = suggestions.matchAll(pattern);
+
+      let newSuggestions = [];
+      for (const match of matches) {
+        console.log(match);
+        if (match.length != 4) {
+          console.log("failed parsing proactive suggestion");
+          return;
+        } else {
+          newSuggestions.push({
+            tag: match[1],
+            code: match[2],
+            expanded_text: match[3],
+          });
+        }
+      }
+      const newSuggestionSet = {
+        suggestions: newSuggestions,
+        predecessorHistoryIdx: stateHistoryRef.current.length - 1,
+        uuid: uuidv4(),
+      };
+
+      if (lastChange.current > startTime) {
+        console.log("Cancelled suggestion because of user interaction");
+        return;
+      }
+
+      // Check if any suggestions were accepted in the previous suggestions -- if not, then remove it.
+      setProactiveSuggestions((prevSuggestions) => {
+        if (newSuggestions.length == 0) {
+          return prevSuggestions; // No change if no suggestions.
+        }
+
+        setKeepLastSuggestions(false);
+
+        console.log("KEEP LAST SUGGESTIONS", keepLastSuggestions);
+        if (keepLastSuggestionRef.current) {
+          console.log("KEEPING SUGGESTIONS CASE", [
+            ...prevSuggestions,
+            newSuggestionSet,
+          ]);
+
+          return [...prevSuggestions, newSuggestionSet];
+        }
+
+        return [...prevSuggestions.slice(0, -1), newSuggestionSet]; // Potentially remove the last one.
+      });
+    },
+    [proactiveConfig],
+  );
+
   const sendInput = useCallback(
     (editorState: JSONContent, modifiers: InputModifiers) => {
       if (defaultModel?.provider === "free-trial") {
@@ -224,7 +356,6 @@ export function Chat() {
           setLocalStorage("ftc", 1);
         }
       }
-
       streamResponse(editorState, modifiers, ideMessenger);
 
       // Increment localstorage counter for popup
@@ -234,7 +365,7 @@ export function Chat() {
         if (currentCount === 300) {
           dispatch(
             setDialogMessage(
-              <div className="text-center p-4">
+              <div className="p-4 text-center">
                 👋 Thanks for using Continue. We are always trying to improve
                 and love hearing from users. If you're interested in speaking,
                 enter your name and email. We won't use this information for
@@ -250,7 +381,7 @@ export function Chat() {
                     });
                     dispatch(
                       setDialogMessage(
-                        <div className="text-center p-4">
+                        <div className="p-4 text-center">
                           Thanks! We'll be in touch soon.
                         </div>,
                       ),
@@ -310,6 +441,8 @@ export function Chat() {
     "newSession",
     async () => {
       saveSession();
+
+      setProactiveSuggestions([]);
       mainTextInputRef.current?.focus?.();
     },
     [saveSession],
@@ -331,8 +464,22 @@ export function Chat() {
         onScroll={handleScroll}
         showScrollbar={state.config.ui?.showChatScrollbar || false}
       >
-        <div className="max-w-3xl m-auto">
+        <div className="m-auto max-w-3xl">
           <StepsDiv>
+            {/*  Handle if any occur before any messages are sent. */}
+            {state.history.length === 0 &&
+              proactiveSuggestions.length === 1 && (
+                <ProactiveSuggestion
+                  uuid={proactiveSuggestions[0]?.uuid}
+                  suggestionIdx={0} // Special exception because first one.
+                  suggestions={proactiveSuggestions[0]?.suggestions} // Send the most recent suggestion here to render.
+                  setProactiveSuggestions={setProactiveSuggestions}
+                  onAccept={() => {
+                    setKeepLastSuggestions(true);
+                  }}
+                />
+              )}
+
             {state.history.map((item, index: number) => (
               <Fragment key={item.message.id}>
                 <ErrorBoundary
@@ -427,6 +574,45 @@ export function Chat() {
                       </TimelineItem>
                     </div>
                   )}
+
+                  {proactiveSuggestions.map((proactiveSuggestion, suggIdx) => {
+                    if (
+                      index == proactiveSuggestion.predecessorHistoryIdx &&
+                      suggIdx != proactiveSuggestions.length - 1
+                    ) {
+                      return (
+                        <ProactiveSuggestion
+                          uuid={proactiveSuggestion.uuid}
+                          suggestionIdx={suggIdx}
+                          suggestions={
+                            proactiveSuggestions[suggIdx]?.suggestions
+                          }
+                          setProactiveSuggestions={setProactiveSuggestions}
+                          onAccept={() => {}}
+                        />
+                      );
+                    } else if (
+                      index == proactiveSuggestion.predecessorHistoryIdx &&
+                      suggIdx == proactiveSuggestions.length - 1
+                    ) {
+                      return (
+                        <ProactiveSuggestion
+                          uuid={proactiveSuggestion.uuid}
+                          suggestionIdx={suggIdx} // Special exception cuz last one.
+                          suggestions={
+                            proactiveSuggestions[suggIdx]?.suggestions
+                          }
+                          setProactiveSuggestions={setProactiveSuggestions}
+                          onAccept={() => {
+                            // Keep last set of suggestions only if accepting a candidate from the last set.
+                            setKeepLastSuggestions(true);
+                          }}
+                        />
+                      );
+                    } else {
+                      return null;
+                    }
+                  })}
                 </ErrorBoundary>
               </Fragment>
             ))}
@@ -440,21 +626,23 @@ export function Chat() {
               sendInput(editorContent, modifiers);
             }}
           />
-
           {active ? (
             <>
               <br />
               <br />
             </>
           ) : state.history.length > 0 ? (
-            <div className="mt-2 hidden xs:inline">
+            <div className="xs:inline mt-2 hidden">
               <NewSessionButton
                 onClick={() => {
                   saveSession();
+                  ideMessenger.post("log", {
+                    message: `Started a new session`,
+                  });
                 }}
                 className="mr-auto"
               >
-                <span className="hidden xs:inline">
+                <span className="xs:inline hidden">
                   New Session ({getMetaKeyLabel()} {isJetBrains() ? "J" : "L"})
                 </span>
               </NewSessionButton>{" "}
@@ -462,7 +650,7 @@ export function Chat() {
           ) : (
             <>
               {getLastSessionId() ? (
-                <div className="mt-2 hidden xs:inline">
+                <div className="xs:inline mt-2 hidden">
                   <NewSessionButton
                     onClick={async () => {
                       loadLastSession().catch((e) =>
@@ -471,20 +659,20 @@ export function Chat() {
                     }}
                     className="mr-auto flex items-center gap-2"
                   >
-                    <ArrowLeftIcon className="w-3 h-3" />
+                    <ArrowLeftIcon className="h-3 w-3" />
                     Last Session
                   </NewSessionButton>
                 </div>
               ) : null}
 
               {onboardingCard.show && (
-                <div className="mt-10 mx-2">
+                <div className="mx-2 mt-10">
                   <OnboardingCard activeTab={onboardingCard.activeTab} />
                 </div>
               )}
 
               {showTutorialCard !== false && !onboardingCard.open && (
-                <div className="flex justify-center w-full">
+                <div className="flex w-full justify-center">
                   <TutorialCard onClose={closeTutorialCard} />
                 </div>
               )}
@@ -501,7 +689,7 @@ export function Chat() {
 
       {ttsActive && (
         <StopButton
-          className="mt-2 mb-4"
+          className="mb-4 mt-2"
           onClick={() => {
             ideMessenger.post("tts/kill", undefined);
           }}
@@ -511,7 +699,7 @@ export function Chat() {
       )}
       {active && (
         <StopButton
-          className="mt-auto mb-4"
+          className="mb-4 mt-auto"
           onClick={() => {
             dispatch(setInactive());
             if (

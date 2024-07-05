@@ -33,6 +33,7 @@ export type ToIdeFromWebviewOrCoreProtocol = {
   saveFile: [{ filepath: string }, void];
   fileExists: [{ filepath: string }, boolean];
   readFile: [{ filepath: string }, string];
+  readFileWithCursor: [{ filepath: string }, string];
   showDiff: [
     { filepath: string; newContents: string; stepIndex: number },
     void,
@@ -89,6 +90,9 @@ export type ToIdeFromWebviewOrCoreProtocol = {
   ];
   logoutOfControlPlane: [undefined, void];
   pathSep: [undefined, string];
+
+  // Proactive suggestions telemetry
+  log: [{ message: string }, void];
 };
 
 export type ToWebviewOrCoreFromIdeProtocol = {

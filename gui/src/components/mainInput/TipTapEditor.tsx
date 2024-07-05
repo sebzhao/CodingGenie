@@ -474,6 +474,8 @@ function TipTapEditor(props: TipTapEditorProps) {
     onUpdate: ({ editor, transaction }) => {
       // If /edit is typed and no context items are selected, select the first
 
+      ideMessenger.post("updateChatTimer", null);
+
       if (contextItems.length > 0) {
         return;
       }

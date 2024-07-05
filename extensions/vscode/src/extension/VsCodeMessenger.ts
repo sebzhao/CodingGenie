@@ -80,6 +80,10 @@ export class VsCodeMessenger {
     private readonly workOsAuthProvider: WorkOsAuthProvider,
   ) {
     /** WEBVIEW ONLY LISTENERS **/
+    this.onWebview("updateChatTimer",  (msg) => {
+      vscode.commands.executeCommand("continue.updateChatTimer");
+    })
+
     this.onWebview("showFile", (msg) => {
       this.ide.openFile(msg.data.filepath);
     });
@@ -132,6 +136,9 @@ export class VsCodeMessenger {
     });
     this.onWebview("readFile", async (msg) => {
       return await ide.readFile(msg.data.filepath);
+    });
+    this.onWebview("readFileWithCursor", async (msg) => {
+      return await ide.readFileWithCursor(msg.data.filepath);
     });
     this.onWebview("showDiff", async (msg) => {
       return await ide.showDiff(

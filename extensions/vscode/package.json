@@ -280,6 +280,24 @@
         "category": "Continue",
         "title": "Docs Force Re-Index",
         "group": "Continue"
+      },
+      {
+        "command": "continue.disableProactiveSuggestions",
+        "category": "Continue",
+        "title": "Disable proactive suggestions",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.requestProactiveSuggestions",
+        "category": "Continue",
+        "title": "Request proactive suggestions",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.configureTaskDescription",
+        "category": "Continue",
+        "title": "Configure Task Description",
+        "group": "Continue"
       }
     ],
     "keybindings": [

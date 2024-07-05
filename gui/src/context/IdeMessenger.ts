@@ -46,6 +46,13 @@ export interface IIdeMessenger {
     options?: LLMFullCompletionOptions,
   ): AsyncGenerator<ChatMessage, PromptLog, unknown>;
 
+  llmChat(
+    modelTitle: string,
+    cancelToken: AbortSignal | undefined,
+    messages: ChatMessage[],
+    options?: LLMFullCompletionOptions,
+  ): Promise<string>;
+
   ide: IDE;
 }
 
@@ -93,11 +100,12 @@ export class IdeMessenger implements IIdeMessenger {
       messageType,
       data,
     };
+    // console.log("Sending message: ", msg); // Have to handle this in vscode?
     vscode.postMessage(msg);
   }
 
   post<T extends keyof FromWebviewProtocol>(
-    messageType: T,
+    messageType: T ,
     data: FromWebviewProtocol[T][0],
     messageId?: string,
     attempt: number = 0,
@@ -229,6 +237,36 @@ export class IdeMessenger implements IIdeMessenger {
       completion: next.value.content?.completion,
       completionOptions: next.value.content?.completionOptions,
     };
+  }
+
+  async llmChat(
+    modelTitle: string,
+    cancelToken: AbortSignal | undefined,
+    messages: ChatMessage[],
+    options: LLMFullCompletionOptions = {},
+  ): Promise<string> {
+    const gen = this.streamRequest(
+      "llm/streamChat",
+      {
+        messages,
+        title: modelTitle,
+        completionOptions: options,
+      },
+      cancelToken,
+    );
+
+    let next = await gen.next();
+    let content = "";
+    while (!next.done) {
+      content += next.value;
+      next = await gen.next();
+    }
+
+    if (next.value.error) {
+      throw new Error(next.value.error);
+    }
+
+    return content;
   }
 }
 

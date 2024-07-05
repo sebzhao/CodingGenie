@@ -343,6 +343,57 @@ export class VsCodeIdeUtils {
     }
   }
 
+  async readFileWithCursor(filepath: string): Promise<string> {
+    try {
+      filepath = this.getAbsolutePath(filepath);
+      const uri = uriFromFilePath(filepath);
+
+      // First, check whether it's a notebook document
+      // Need to iterate over the cells to get full contents
+      const notebook =
+        vscode.workspace.notebookDocuments.find(
+          (doc) => doc.uri.toString() === uri.toString(),
+        ) ??
+        (uri.fsPath.endsWith("ipynb")
+          ? await vscode.workspace.openNotebookDocument(uri)
+          : undefined);
+      if (notebook) {
+        return notebook
+          .getCells()
+          .map((cell) => cell.document.getText())
+          .join("\n\n");
+      }
+
+      // Check whether it's an open document
+      const openTextDocument = vscode.workspace.textDocuments.find(
+        (doc) => doc.uri.fsPath === uri.fsPath,
+      );
+      if (openTextDocument !== undefined) {
+        const activeEditor = vscode.window.visibleTextEditors.find(
+          (editor) => editor.document.uri.fsPath === uri.fsPath,
+        );
+        if (activeEditor) {
+          const cursorPosition = activeEditor.selection.active;
+          const documentText = openTextDocument.getText();
+      
+          // Calculate the offset for the cursor position in the document text
+          const offset = openTextDocument.offsetAt(cursorPosition);
+          // Insert the {cursor} string into the document text at the cursor position
+          const updatedText =
+          documentText.slice(0, offset) + "{cursor}" + documentText.slice(offset);
+          return updatedText;
+        }
+
+
+        return openTextDocument.getText();
+      }
+      return "";
+    } catch (e) {
+      console.warn("Error reading file", e);
+      return "";
+    }
+  }
+
   async readRangeInFile(
     filepath: string,
     range: vscode.Range,

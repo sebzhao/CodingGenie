@@ -165,6 +165,11 @@ export class MessageIde implements IDE {
   async readFile(filepath: string): Promise<string> {
     return await this.request("readFile", { filepath });
   }
+
+  async readFileWithCursor(filepath: string): Promise<string> {
+    return await this.request("readFileWithCursor", { filepath });
+  }
+
   async showDiff(
     filepath: string,
     newContents: string,

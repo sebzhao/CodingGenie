@@ -424,6 +424,11 @@ class VsCodeIde implements IDE {
   async readFile(filepath: string): Promise<string> {
     return await this.ideUtils.readFile(filepath);
   }
+
+  async readFileWithCursor(filepath: string): Promise<string> {
+    return await this.ideUtils.readFileWithCursor(filepath);
+  }
+
   async showDiff(
     filepath: string,
     newContents: string,

@@ -185,6 +185,7 @@ const Layout = () => {
 
   return (
     <LastSessionProvider>
+      {/* FIXME: Add back the customization bar where appropriate */}
       <LayoutTopDiv>
         <div
           style={{
