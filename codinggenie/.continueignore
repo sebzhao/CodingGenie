@@ -1,0 +1,7 @@
+**/*.run.xml
+docs/docs/languages
+.changes/
+.idea/
+.vscode/
+.archive/
+**/*.scm

@@ -1,0 +1,622 @@
+{
+  "name": "continue",
+  "icon": "media/icon.png",
+  "author": "Continue Dev, Inc",
+  "version": "0.8.55",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/continuedev/continue"
+  },
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "bugs": {
+    "url": "https://github.com/continuedev/continue/issues",
+    "email": "nate@continue.dev"
+  },
+  "homepage": "https://continue.dev",
+  "qna": "https://github.com/continuedev/continue/issues/new/choose",
+  "license": "Apache-2.0",
+  "displayName": "Continue - Codestral, Claude, and more",
+  "pricing": "Free",
+  "description": "The leading open-source AI code assistant",
+  "publisher": "Continue",
+  "engines": {
+    "vscode": "^1.70.0",
+    "node": ">=20.11.0"
+  },
+  "engine-strict": true,
+  "galleryBanner": {
+    "color": "#1E1E1E",
+    "theme": "dark"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages",
+    "Education",
+    "Machine Learning",
+    "Snippets"
+  ],
+  "keywords": [
+    "chatgpt",
+    "github",
+    "copilot",
+    "claude",
+    "sonnet",
+    "mistral",
+    "codestral",
+    "codegpt",
+    "ai",
+    "llama"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:continueGUIView"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "filenames": [
+          "config.json",
+          ".continuerc.json"
+        ],
+        "id": "jsonc"
+      }
+    ],
+    "configuration": {
+      "title": "Continue",
+      "properties": {
+        "continue.telemetryEnabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Continue collects anonymous usage data, cleaned of PII, to help us improve the product for our users. Read more  at [continue.dev › Telemetry](https://docs.continue.dev/telemetry)."
+        },
+        "continue.enableContinueForTeams": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable Continue for teams beta features. To sign in, click the person icon in the bottom right of the sidebar."
+        },
+        "continue.showInlineTip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline suggestion to use the Continue keyboard shortcuts (e.g. \"Cmd/Ctrl L to select code, Cmd/Ctrl I to edit\")."
+        },
+        "continue.enableQuickActions": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable the experimental Quick Actions feature. Read our walkthrough to learn about configuration and how to share feedback: [continue.dev › Walkthrough: Quick Actions (experimental)](https://docs.continue.dev/features/quick-actions)"
+        },
+        "continue.enableTabAutocomplete": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable Continue's tab autocomplete feature. Read our walkthrough to learn about configuration and how to share feedback: [continue.dev › Walkthrough: Tab Autocomplete (beta)](https://docs.continue.dev/features/tab-autocomplete)"
+        },
+        "continue.pauseTabAutocompleteOnBattery": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Pause Continue's tab autocomplete feature when your battery is low."
+        },
+        "continue.pauseCodebaseIndexOnStart": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Pause Continue's codebase index on start."
+        },
+        "continue.enableDebugLogs": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable Continue Debug Logs in the Output panel."
+        },
+        "continue.remoteConfigServerUrl": {
+          "type": "string",
+          "default": null,
+          "markdownDescription": "If your team is set up to use shared configuration, enter the server URL here and your user token below to enable automatic syncing."
+        },
+        "continue.userToken": {
+          "type": "string",
+          "default": null,
+          "markdownDescription": "If your team is set up to use shared configuration, enter your user token here and your server URL above to enable automatic syncing."
+        },
+        "continue.remoteConfigSyncPeriod": {
+          "type": "number",
+          "default": 60,
+          "description": "The period of time in minutes between automatic syncs."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "continue.applyCodeFromChat",
+        "category": "Continue",
+        "title": "Apply code from chat",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.acceptDiff",
+        "category": "Continue",
+        "title": "Accept Diff",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.rejectDiff",
+        "category": "Continue",
+        "title": "Reject Diff",
+        "group": "Continue",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "continue.acceptVerticalDiffBlock",
+        "category": "Continue",
+        "title": "Accept Vertical Diff Block",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.rejectVerticalDiffBlock",
+        "category": "Continue",
+        "title": "Reject Vertical Diff Block",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.quickEdit",
+        "category": "Continue",
+        "title": "Generate Code",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.focusContinueInput",
+        "category": "Continue",
+        "title": "Add Highlighted Code to Context and Clear Chat",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.focusContinueInputWithoutClear",
+        "category": "Continue",
+        "title": "Add Highlighted Code to Context",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.debugTerminal",
+        "category": "Continue",
+        "title": "Debug Terminal",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.toggleFullScreen",
+        "category": "Continue",
+        "title": "Toggle Full Screen",
+        "icon": "$(fullscreen)",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.openConfigJson",
+        "category": "Continue",
+        "title": "Open config.json",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.toggleTabAutocompleteEnabled",
+        "category": "Continue",
+        "title": "Toggle Autocomplete Enabled",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.selectFilesAsContext",
+        "category": "Continue",
+        "title": "Select Files as Context",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.newSession",
+        "category": "Continue",
+        "title": "New Session",
+        "icon": "$(add)",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.viewHistory",
+        "category": "Continue",
+        "title": "View History",
+        "icon": "$(history)",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.navigateTo",
+        "category": "Continue",
+        "title": "Navigate to a path",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.writeCommentsForCode",
+        "category": "Continue",
+        "title": "Write Comments for this Code",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.writeDocstringForCode",
+        "category": "Continue",
+        "title": "Write a Docstring for this Code",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.fixCode",
+        "category": "Continue",
+        "title": "Fix this Code",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.optimizeCode",
+        "category": "Continue",
+        "title": "Optimize this Code",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.fixGrammar",
+        "category": "Continue",
+        "title": "Fix Grammar / Spelling",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.codebaseForceReIndex",
+        "category": "Continue",
+        "title": "Codebase Force Re-Index",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.rebuildCodebaseIndex",
+        "category": "Continue",
+        "title": "Rebuild codebase index",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.docsIndex",
+        "category": "Continue",
+        "title": "Docs Index",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.docsReIndex",
+        "category": "Continue",
+        "title": "Docs Force Re-Index",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.disableProactiveSuggestions",
+        "category": "Continue",
+        "title": "Disable proactive suggestions",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.requestProactiveSuggestions",
+        "category": "Continue",
+        "title": "Request proactive suggestions",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.configureTaskDescription",
+        "category": "Continue",
+        "title": "Configure Task Description",
+        "group": "Continue"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "continue.focusContinueInput",
+        "mac": "cmd+l",
+        "key": "ctrl+l"
+      },
+      {
+        "command": "continue.focusContinueInputWithoutClear",
+        "mac": "cmd+shift+l",
+        "key": "ctrl+shift+l"
+      },
+      {
+        "command": "continue.acceptDiff",
+        "mac": "shift+cmd+enter",
+        "key": "shift+ctrl+enter"
+      },
+      {
+        "command": "continue.rejectDiff",
+        "mac": "shift+cmd+backspace",
+        "key": "shift+ctrl+backspace"
+      },
+      {
+        "command": "continue.rejectDiff",
+        "mac": "cmd+z",
+        "key": "ctrl+z",
+        "when": "continue.diffVisible"
+      },
+      {
+        "command": "continue.quickEditHistoryUp",
+        "mac": "up",
+        "key": "up",
+        "when": "false && continue.quickEditHistoryFocused"
+      },
+      {
+        "command": "continue.quickEditHistoryDown",
+        "mac": "down",
+        "key": "down",
+        "when": "false && continue.quickEditHistoryFocused"
+      },
+      {
+        "command": "continue.acceptVerticalDiffBlock",
+        "mac": "alt+cmd+y",
+        "key": "alt+ctrl+y"
+      },
+      {
+        "command": "continue.rejectVerticalDiffBlock",
+        "mac": "alt+cmd+n",
+        "key": "alt+ctrl+n"
+      },
+      {
+        "command": "continue.quickEdit",
+        "mac": "cmd+i",
+        "key": "ctrl+i"
+      },
+      {
+        "command": "continue.debugTerminal",
+        "mac": "cmd+shift+r",
+        "key": "ctrl+shift+r"
+      },
+      {
+        "command": "continue.toggleFullScreen",
+        "mac": "cmd+k cmd+m",
+        "key": "ctrl+k ctrl+m",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "continue.toggleTabAutocompleteEnabled",
+        "mac": "cmd+k cmd+a",
+        "key": "ctrl+k ctrl+a",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "continue.applyCodeFromChat",
+        "mac": "alt+a",
+        "key": "alt+a"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "continue.continueSubMenu",
+        "label": "Continue"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "continue.quickEdit"
+        },
+        {
+          "command": "continue.focusContinueInput"
+        },
+        {
+          "command": "continue.focusContinueInputWithoutClear"
+        },
+        {
+          "command": "continue.debugTerminal"
+        },
+        {
+          "command": "continue.toggleFullScreen"
+        },
+        {
+          "command": "continue.newSession"
+        }
+      ],
+      "editor/context": [
+        {
+          "submenu": "continue.continueSubMenu",
+          "group": "0_acontinue"
+        }
+      ],
+      "editor/title/run": [
+        {
+          "command": "continue.rejectDiff",
+          "group": "Continue",
+          "when": "continue.streamingDiff"
+        }
+      ],
+      "continue.continueSubMenu": [
+        {
+          "command": "continue.focusContinueInputWithoutClear",
+          "group": "Continue",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "continue.writeCommentsForCode",
+          "group": "Continue",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "continue.writeDocstringForCode",
+          "group": "Continue",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "continue.fixCode",
+          "group": "Continue",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "continue.optimizeCode",
+          "group": "Continue",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "continue.fixGrammar",
+          "group": "Continue",
+          "when": "editorHasSelection && editorLangId == 'markdown'"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "continue.selectFilesAsContext",
+          "group": "1_debug@1"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "continue.newSession",
+          "group": "navigation@1",
+          "when": "view == continue.continueGUIView"
+        },
+        {
+          "command": "continue.viewHistory",
+          "group": "navigation@2",
+          "when": "view == continue.continueGUIView"
+        },
+        {
+          "command": "continue.toggleFullScreen",
+          "group": "navigation@3",
+          "when": "view == continue.continueGUIView"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "continue.newSession",
+          "group": "navigation@1",
+          "when": "activeWebviewPanelId == continue.continueGUIView"
+        },
+        {
+          "command": "continue.viewHistory",
+          "group": "navigation@2",
+          "when": "activeWebviewPanelId == continue.continueGUIView"
+        }
+      ],
+      "terminal/context": [
+        {
+          "command": "continue.debugTerminal",
+          "group": "navigation@top"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "continue",
+          "title": "Continue",
+          "icon": "media/sidebar-icon.png"
+        }
+      ]
+    },
+    "views": {
+      "continue": [
+        {
+          "type": "webview",
+          "id": "continue.continueGUIView",
+          "name": "",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "config.json",
+        "url": "./config_schema.json"
+      },
+      {
+        "fileMatch": ".continuerc.json",
+        "url": "./continue_rc_schema.json"
+      }
+    ]
+  },
+  "scripts": {
+    "esbuild-base": "node scripts/esbuild.js",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "tsc": "tsc -p ./",
+    "tsc:check": "tsc -p ./ --noEmit",
+    "tsc-watch": "tsc -watch -p ./",
+    "rebuild": "electron-rebuild -v 19.1.8 node-pty",
+    "lint": "eslint src --ext ts",
+    "build-test": "npm run esbuild && node esbuild.test.mjs",
+    "test": "npm run build-test && node ./out/runTestOnVSCodeHost.js",
+    "quick-test": "npm run build-test && node ./out/runTestOnVSCodeHost.js",
+    "prepackage": "node scripts/prepackage.js",
+    "package": "node scripts/package.js",
+    "package-all": "node scripts/package-all.js",
+    "package:pre-release": "node scripts/package.js --pre-release",
+    "build:rust": "cargo-cp-artifact -ac sync sync.node -- cargo build --manifest-path ../../sync/Cargo.toml --message-format=json-render-diagnostics",
+    "build-debug:rust": "npm run build:rust --",
+    "build-release:rust": "npm run build:rust -- --release"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.6.4",
+    "@nestjs/common": "^8.4.7",
+    "@openapitools/openapi-generator-cli": "^2.5.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/follow-redirects": "^1.14.4",
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "16.x",
+    "@types/react-dom": "^18.2.4",
+    "@types/request": "^2.48.8",
+    "@types/vscode": "1.70",
+    "@types/ws": "^8.5.4",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/vsce": "^2.22.0",
+    "cargo-cp-artifact": "^0.1",
+    "esbuild": "0.17.19",
+    "eslint": "^8.28.0",
+    "glob": "^8.0.3",
+    "json-schema-to-typescript": "^12.0.0",
+    "mocha": "^10.4.0",
+    "ovsx": "^0.8.3",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3",
+    "vite": "^4.3.9",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "@electron/rebuild": "^3.2.10",
+    "@reduxjs/toolkit": "^1.9.3",
+    "@types/node-fetch": "^2.6.11",
+    "@types/uuid": "^9.0.8",
+    "@vscode/ripgrep": "^1.15.9",
+    "@vscode/test-electron": "^2.3.9",
+    "axios": "^1.2.5",
+    "core": "file:../../core",
+    "cors": "^2.8.5",
+    "dbinfoz": "^0.11.0",
+    "downshift": "^7.6.0",
+    "esbuild": "^0.17.19",
+    "express": "^4.18.2",
+    "fkill": "^8.1.0",
+    "follow-redirects": "^1.15.4",
+    "handlebars": "^4.7.8",
+    "highlight.js": "^11.7.0",
+    "highlightable": "^1.3.0-beta.0",
+    "http-proxy": "^1.18.1",
+    "http-proxy-agent": "^7.0.0",
+    "http-proxy-middleware": "^2.0.6",
+    "https-proxy-agent": "^7.0.2",
+    "ignore": "^5.3.0",
+    "jsdom": "^24.0.0",
+    "minisearch": "^7.0.0",
+    "monaco-editor": "^0.45.0",
+    "monaco-vscode-textmate-theme-converter": "^0.1.7",
+    "ncp": "^2.0.0",
+    "node-fetch": "^3.3.2",
+    "node-machine-id": "^1.1.12",
+    "posthog-node": "^3.6.3",
+    "react-markdown": "^8.0.7",
+    "react-redux": "^8.0.5",
+    "read-last-lines": "^1.8.0",
+    "request": "^2.88.2",
+    "socket.io-client": "^4.7.2",
+    "strip-ansi": "^7.1.0",
+    "systeminformation": "^5.22.10",
+    "tailwindcss": "^3.3.2",
+    "undici": "^6.2.0",
+    "uuid": "^9.0.1",
+    "uuidv4": "^6.2.13",
+    "vectordb": "^0.4.20",
+    "vscode-languageclient": "^8.0.2",
+    "ws": "^8.13.0",
+    "yarn": "^1.22.21"
+  }
+}

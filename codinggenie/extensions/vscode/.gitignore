@@ -1,0 +1,17 @@
+.vscode/
+node_modules/
+out/
+.vscode-test/
+data/
+src/client
+.continue
+
+exe
+bin
+assets
+
+gui/*
+!gui/onigasm.wasm
+
+.devcontainer
+.github
