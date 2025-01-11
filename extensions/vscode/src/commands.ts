@@ -736,6 +736,7 @@ const commandsMap: (
     },
     "continue.requestProactiveSuggestions": () => {
       // FIXME: Add in an option s.t. if this is done using the command, then it's uncancellable even on changes.
+      console.log("Request proactive suggestions");
       sidebar.webviewProtocol?.request("requestProactiveSuggestions", undefined);
     },
     "continue.enableProactiveSuggestions": () => {

@@ -273,6 +273,7 @@ export function Chat() {
   useWebviewListener(
     "requestProactiveSuggestions",
     async () => {
+      console.log("requested for proactive suggestions received on frontend");
       const startTime = Date.now();
       let suggestions = await getProactiveSuggestions(
         stateHistoryRef.current[stateHistoryRef.current.length - 2] || null,
