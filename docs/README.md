@@ -22,6 +22,9 @@ CodingGenie is an open-source implementation of a proactive assistant integrated
     System Design
 </p>
 
+## Presentation
+<iframe width="560" height="315" src="https://www.youtube.com/embed/z2hQdw54mNI?si=ERRsmYb5bL_pOfBD" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## How to use CodingGenie
 Head to our [github](https://github.com/sebzhao/CodingGenie) and follow the installation instructions in the README.
 
