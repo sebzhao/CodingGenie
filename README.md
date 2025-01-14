@@ -26,7 +26,7 @@ CodingGenie is an open-source implementation of a proactive assistant integrated
 
 ## Acknowledgements
 ### Continue
-We build CodingGenie off of a fork of Continue, here is their [main repo](https://github.com/continuedev/continue) and [website](https://www.continue.dev/). Our fork is not guaranteed to be the most up to date, so please refer to codinggenie/README_CONTINUE.md for the correct Continue README.
+We build CodingGenie off of a fork of Continue, here is their [main repo](https://github.com/continuedev/continue) and [website](https://www.continue.dev/). Our fork is not guaranteed to be the most up to date, so please refer to codinggenie/README_CONTINUE.md and codinggenie/docs/ for the correct information on Continue and its features.
 
 ## Getting Started
 
@@ -39,6 +39,7 @@ CodingGenie requires building the package for your target architecture, with min
 3. Open the codinggenie folder located in the cloned repo in VSCode.
 4. Open the VS Code command pallet (`cmd/ctrl+shift+p`) and select `Tasks: Run Task` and then select `install-all-dependencies`
 5. Find the newly generated file, `extensions/vscode/build/continue-{VERSION}.vsix`. Then, navigate to the Extensions icon in VSCode, click on the ... icon in the top right of the opened tab, and select "Install from VSIX". Select the newly generated file.
+6. The extension is installed now, but you will also have to provide an API key and set up a model. Directions are available in the Continue docs and in the codinggenie/docs/docs/chat folder. 
 
 ## Functionality and Commands
 
@@ -87,7 +88,6 @@ Here are the possible suggestion types.
 <p align="center">
   <img src="docs/images/configure_suggestions.png" width=500px/>
 </p>
-
 
 ## Citation
 We will soon update this section with how to cite us, thank you!

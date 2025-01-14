@@ -36,8 +36,7 @@ Head to our [github](https://github.com/sebzhao/CodingGenie) and follow the inst
 <iframe width="560" height="315" src="https://www.youtube.com/embed/-7rxSFqVK3Q?si=V3zPEONERC1k03b-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## Citation
-If you found our work helpful, please cite us as:
-(TODO)
+We will soon update this section with how to cite us, thank you!
 
 ## License
 This code is released under the MIT license.
