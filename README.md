@@ -4,7 +4,7 @@ Implementation of [CodingGenie: A Proactive LLM-Powered Programming Assistant]
 
 ## Overview
 
-<img padding="30" align="right" src="docs/images/genie.png" alt="CodingGenie Logo" width="200"/>
+<img padding="30" align="right" src="docs/images/genie.png" alt="CodingGenie Logo" width="150"/>
 
 CodingGenie is an open-source implementation of a proactive assistant integrated into the chat window of Continue, a VSCode coding LLM extension. Proactive suggestions are chat-based suggestions which are suggested autonomously without user prompting, triggered after code changes or chat messages. CodingGenie suggests chat completions based upon several factors, including the code context, optional task description, enabled suggestion types, and previous conversation history. 
 
@@ -83,7 +83,7 @@ Configure suggestion types shown.
 
 Here are the possible suggestion types.
 <p align="center">
-  <img src="docs/images/suggestion_types.png" width=500px/>
+  <img src="docs/images/configure_suggestions.png" width=500px/>
 </p>
 
 
